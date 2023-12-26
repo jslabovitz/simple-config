@@ -59,4 +59,15 @@ class SimpleConfigTest < Minitest::Test
     assert { @base_config.d == 4 }
   end
 
+  def test_types
+    config = Simple::Config.define(
+      uri: { default: 'http://localhost', converter: :uri },
+      sym: { default: 'a', converter: :symbol },
+      path: { default: 'a/b/c', converter: :path },
+    )
+    assert { config.uri.kind_of?(URI) }
+    assert { config.sym == :a }
+    assert { config.path == Path.new('a/b/c') }
+  end
+
 end

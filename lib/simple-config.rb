@@ -1,4 +1,7 @@
 require 'json'
+require 'yaml'
+require 'path'
+require 'uri'
 
 module Simple
 
@@ -12,26 +15,33 @@ module Simple
 
     def self.define(definitions)
       fields = {}
-      defaults = {}
-      definitions.each do |key, field|
+      data = definitions.map do |key, field|
         field = Field.make(field)
         fields[key] = field
-        defaults[key] = field.convert(field.default)
-      end
-      new(fields: fields, data: {})
+        [key, field.convert(field.default)]
+      end.to_h
+      new(fields: fields, data: data)
     end
 
     def initialize(parent: nil, fields:, data:)
       @parent = parent
       @fields = fields
       @data = data.map do |key, value|
+        key = key.to_sym
         field = @fields[key] or raise Error, "Unknown config key: #{key.inspect}"
         [key, field.convert(value)]
       end.to_h
     end
 
     def load(file)
-      make(**JSON.parse(File.read(file), symbolize_names: true))
+      data = File.read(file)
+      json = JSON.parse(data, symbolize_names: true)
+      make(**json)
+    end
+
+    def load_yaml(file)
+      yaml = YAML.load_file(file, permitted_classes: [Date, Symbol])
+      make(**yaml)
     end
 
     def make(**data)
@@ -60,7 +70,7 @@ module Simple
       elsif @parent
         @parent.send(key)
       else
-        field.default
+        super
       end
     end
 
@@ -90,13 +100,23 @@ module Simple
       end
 
       def convert(value)
-        case @converter
-        when Symbol
-          value&.send(@converter)
-        when Proc
-          @converter.call(value)
+        if value.nil?
+          nil
         else
-          value
+          case @converter
+          when :path
+            Path.new(value)
+          when :date
+            value.kind_of?(Date) ? value : Date.parse(value)
+          when :uri
+            value.kind_of?(URI) ? value : URI.parse(value)
+          when :symbol
+            value.to_sym
+          when Proc
+            @converter.call(value)
+          else
+            value
+          end
         end
       end
 
