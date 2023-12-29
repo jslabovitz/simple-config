@@ -56,6 +56,10 @@ module Simple
       as_json.to_json(*opts)
     end
 
+    def to_h
+      (@parent&.to_h || {}).merge(@data)
+    end
+
     def save(file)
       File.write(file, JSON.pretty_generate(self))
     end
