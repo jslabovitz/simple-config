@@ -16,8 +16,8 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'path', '~> 2.1'
 
-  s.add_development_dependency 'bundler', '~> 2.6'
+  s.add_development_dependency 'bundler', '~> 2.7'
   s.add_development_dependency 'minitest', '~> 5.25'
   s.add_development_dependency 'minitest-power_assert', '~> 0.3'
-  s.add_development_dependency 'rake', '~> 13.2'
+  s.add_development_dependency 'rake', '~> 13.3'
 end
